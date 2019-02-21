@@ -35,15 +35,7 @@ class Proxies(object):
 
     def __init__(self, proxy_list, backoff=None):
 
-        self.proxies = {url: {
-            'ping': 0,
-            'requests': 0,
-            'priority': 1,
-            'failed_attempts': 0,
-            'next_check': None,
-            'backoff_time': None,
-            'mark' : 0
-        } for url in proxy_list}  # type: dict
+        self.proxies = {url: ProxyAssesment() for url in proxy_list}  # type: dict
 
         self.proxies_by_hostport = {
             extract_proxy_hostport(proxy): proxy
@@ -66,9 +58,9 @@ class Proxies(object):
         return random.choice(available)
 
     def get_best(self):
-        available = list(self.unchecked | self.good)
-        if not available:
-            return None
+        if list(self.unchecked):
+            lst = list(self.unchecked)
+        else list
 
         # LOGIKA WYBORU
 
@@ -157,8 +149,14 @@ class Proxies(object):
             int(self.mean_backoff_time),
         )
 
-    def grade_proxy(self, proxy, param):
-        pass
+    def grade_proxy(self, proxy, ping : int):
+        """
+        Grades proxy with its response time
+        :param proxy: key for proxy
+        :param ping:
+        :return:
+        """
+        self.proxies[proxy].ping = ping
 
 
 @attr.s
@@ -194,3 +192,12 @@ class ProxyAssesment:
     @property
     def mark(self):
         return self.ping * self.priority + self.requests
+
+    __dict__ = {
+        'ping' : ping,
+        'requests' : requests,
+        'priority' : priority,
+        'failed_attempts' : failed_attempts,
+        'next_check' : next_check,
+        'backoff_time' : backoff_time
+    }
