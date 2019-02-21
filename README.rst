@@ -1,17 +1,9 @@
 scrapy-rotating-proxies
 =======================
 
-.. image:: https://img.shields.io/pypi/v/scrapy-rotating-proxies.svg
-   :target: https://pypi.python.org/pypi/scrapy-rotating-proxies
+.. image:: https://img.shields.io/pypi/v/rentier-scrapy-proxy-rotator.svg
+   :target: https://pypi.python.org/pypi/rentier-scrapy-proxy-rotator
    :alt: PyPI Version
-
-.. image:: https://travis-ci.org/TeamHG-Memex/scrapy-rotating-proxies.svg?branch=master
-   :target: http://travis-ci.org/TeamHG-Memex/scrapy-rotating-proxies
-   :alt: Build Status
-
-.. image:: http://codecov.io/github/TeamHG-Memex/scrapy-rotating-proxies/coverage.svg?branch=master
-   :target: http://codecov.io/github/TeamHG-Memex/scrapy-rotating-proxies?branch=master
-   :alt: Code Coverage
 
 This package provides a Scrapy_ middleware to use rotating proxies,
 check that they are alive and adjust crawling speed.
@@ -25,7 +17,7 @@ Installation
 
 ::
 
-    pip install scrapy-rotating-proxies
+    pip install rentier-scrapy-proxy-rotator
 
 Usage
 -----
@@ -43,15 +35,14 @@ with a path to a file with proxies, one per line::
 
    ROTATING_PROXY_LIST_PATH = '/my/path/proxies.txt'
 
-``ROTATING_PROXY_LIST_PATH`` takes precedence over ``ROTATING_PROXY_LIST``
-if both options are present.
+Both are used if provided.
 
 Then add rotating_proxies middlewares to your DOWNLOADER_MIDDLEWARES::
 
     DOWNLOADER_MIDDLEWARES = {
         # ...
-        'rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
-        'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
+        'rentier_rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
+        'rentier_rotating_proxies.middlewares.BanDetectionMiddleware': 620,
         # ...
     }
 
@@ -77,7 +68,7 @@ regardless of request url domain.
 Customization
 -------------
 
-``scrapy-rotating-proxies`` keeps track of working and non-working proxies,
+``rentier-scrapy-proxy-rotator`` keeps track of working and non-working proxies,
 and re-checks non-working from time to time.
 
 Detection of a non-working proxy is site-specific.
@@ -175,15 +166,5 @@ and take care of all these details.
 Contributing
 ------------
 
-* source code: https://github.com/TeamHG-Memex/scrapy-rotating-proxies
-* bug tracker: https://github.com/TeamHG-Memex/scrapy-rotating-proxies/issues
-
-To run tests, install tox_ and run ``tox`` from the source checkout.
-
-.. _tox: https://tox.readthedocs.io/en/latest/
-
-----
-
-.. image:: https://hyperiongray.s3.amazonaws.com/define-hg.svg
-    :target: https://www.hyperiongray.com/?pk_campaign=github&pk_kwd=scrapy-rotating-proxies
-    :alt: define hyperiongray
+* source code: https://github.com/rentieranalytics/rentier-scrapy-proxy-rotator
+* bug tracker: https://github.com/rentieranalytics/rentier-scrapy-proxy-rotator/issues
