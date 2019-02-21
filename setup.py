@@ -15,7 +15,7 @@ def get_long_description():
 
 setup(
     name='rentier-scrapy-advanced-rotating-proxies',
-    version='0.6.1',
+    version='0.6.2',
     author='Michal Hodur, Mikhail Korobov',
     author_email='mhodur@protonmail.com, kmike84@gmail.com',
     license='MIT license',

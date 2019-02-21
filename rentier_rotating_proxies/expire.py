@@ -35,7 +35,7 @@ class Proxies(object):
 
     def __init__(self, proxy_list, backoff=None):
 
-        self.proxies = {url: ProxyAssesment() for url in proxy_list}  # type: dict
+        self.proxies = {url: ProxyAssesment(url) for url in proxy_list}  # type: dict
 
         self.proxies_by_hostport = {
             extract_proxy_hostport(proxy): proxy
@@ -60,9 +60,18 @@ class Proxies(object):
     def get_best(self):
         if list(self.unchecked):
             lst = list(self.unchecked)
-        else list
 
-        # LOGIKA WYBORU
+        else:
+            lst = list(self.good)
+
+        proxies = []
+        for key in lst:
+            proxies.append(self.proxies[key])
+
+        if proxies:
+            proxies = sorted(proxies, key=lambda proxy : proxy.mark)
+            return proxies[0].url
+
 
     def get_proxy(self, proxy_address):
         """
@@ -157,6 +166,7 @@ class Proxies(object):
         :return:
         """
         self.proxies[proxy].ping = ping
+        self.proxies[proxy].requests = self.proxies[proxy].requests + 1
 
 
 @attr.s
@@ -188,10 +198,14 @@ class ProxyAssesment:
     failed_attempts = 0
     next_check = None
     backoff_time = None
+    url = ''
 
     @property
     def mark(self):
         return self.ping * self.priority + self.requests
+
+    def __init__(self, url):
+        self.url = url
 
     __dict__ = {
         'ping' : ping,
@@ -201,3 +215,4 @@ class ProxyAssesment:
         'next_check' : next_check,
         'backoff_time' : backoff_time
     }
+
