@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Proxies(object):
     """
-    Expiring proxies container.
+    Expiring ranking proxies container.
 
     A proxy can be in 3 states:
 
@@ -32,12 +32,24 @@ class Proxies(object):
     'reanimated'). This timeout increases exponentially after each
     unsuccessful attempt to use a proxy.
     """
+
     def __init__(self, proxy_list, backoff=None):
-        self.proxies = {url: ProxyState() for url in proxy_list}
+
+        self.proxies = {url: {
+            'ping': 0,
+            'requests': 0,
+            'priority': 1,
+            'failed_attempts': 0,
+            'next_check': None,
+            'backoff_time': None,
+            'mark' : 0
+        } for url in proxy_list}  # type: dict
+
         self.proxies_by_hostport = {
             extract_proxy_hostport(proxy): proxy
             for proxy in self.proxies
         }
+
         self.unchecked = set(self.proxies.keys())
         self.good = set()
         self.dead = set()
@@ -52,6 +64,13 @@ class Proxies(object):
         if not available:
             return None
         return random.choice(available)
+
+    def get_best(self):
+        available = list(self.unchecked | self.good)
+        if not available:
+            return None
+
+        # LOGIKA WYBORU
 
     def get_proxy(self, proxy_address):
         """
@@ -138,6 +157,9 @@ class Proxies(object):
             int(self.mean_backoff_time),
         )
 
+    def grade_proxy(self, proxy, param):
+        pass
+
 
 @attr.s
 class ProxyState(object):
@@ -159,3 +181,16 @@ def exp_backoff(attempt, cap=3600, base=300):
 def exp_backoff_full_jitter(*args, **kwargs):
     """ Exponential backoff time with Full Jitter """
     return random.uniform(0, exp_backoff(*args, **kwargs))
+
+
+class ProxyAssesment:
+    ping = 0
+    requests = 0
+    priority = 1
+    failed_attempts = 0
+    next_check = None
+    backoff_time = None
+
+    @property
+    def mark(self):
+        return self.ping * self.priority + self.requests

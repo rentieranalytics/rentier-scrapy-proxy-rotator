@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from rotating_proxies.expire import Proxies, exp_backoff
+from rentier_rotating_proxies.expire import Proxies, exp_backoff
 
 
 def test_proxies():

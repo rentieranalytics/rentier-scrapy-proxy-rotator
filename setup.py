@@ -4,12 +4,6 @@ import re
 import os
 
 
-def get_version():
-    fn = os.path.join(os.path.dirname(__file__), "rotating_proxies", "__init__.py")
-    with open(fn) as f:
-        return re.findall("__version__ = '([\d.\w]+)'", f.read())[0]
-
-
 def get_long_description():
     readme = open('README.rst').read()
     changelog = open('CHANGES.rst').read()
@@ -20,13 +14,13 @@ def get_long_description():
 
 
 setup(
-    name='scrapy-rotating-proxies',
-    version=get_version(),
-    author='Mikhail Korobov',
-    author_email='kmike84@gmail.com',
+    name='rentier-scrapy-advanced-rotating-proxies',
+    version='0.6.1',
+    author='Michal Hodur, Mikhail Korobov',
+    author_email='mhodur@protonmail.com, kmike84@gmail.com',
     license='MIT license',
     long_description=get_long_description(),
-    description="Rotating proxies for Scrapy",
+    description="Advanced Rotating Proxies for Scrapy",
     url='https://github.com/TeamHG-Memex/scrapy-rotating-proxies',
     packages=find_packages(exclude=['tests']),
     install_requires=[
@@ -47,5 +41,6 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 )
