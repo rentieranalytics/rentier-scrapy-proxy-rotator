@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Proxies(object):
     """
-    Expiring proxies container.
+    Expiring ranking proxies container.
 
     A proxy can be in 3 states:
 
@@ -32,12 +32,16 @@ class Proxies(object):
     'reanimated'). This timeout increases exponentially after each
     unsuccessful attempt to use a proxy.
     """
+
     def __init__(self, proxy_list, backoff=None):
-        self.proxies = {url: ProxyState() for url in proxy_list}
+
+        self.proxies = {url: ProxyAssesment(url) for url in proxy_list}  # type: dict
+
         self.proxies_by_hostport = {
             extract_proxy_hostport(proxy): proxy
             for proxy in self.proxies
         }
+
         self.unchecked = set(self.proxies.keys())
         self.good = set()
         self.dead = set()
@@ -52,6 +56,22 @@ class Proxies(object):
         if not available:
             return None
         return random.choice(available)
+
+    def get_best(self):
+        if list(self.unchecked):
+            lst = list(self.unchecked)
+
+        else:
+            lst = list(self.good)
+
+        proxies = []
+        for key in lst:
+            proxies.append(self.proxies[key])
+
+        if proxies:
+            proxies = sorted(proxies, key=lambda proxy : proxy.mark)
+            return proxies[0].url
+
 
     def get_proxy(self, proxy_address):
         """
@@ -138,6 +158,16 @@ class Proxies(object):
             int(self.mean_backoff_time),
         )
 
+    def grade_proxy(self, proxy, ping : int):
+        """
+        Grades proxy with its response time
+        :param proxy: key for proxy
+        :param ping:
+        :return:
+        """
+        self.proxies[proxy].ping = ping
+        self.proxies[proxy].requests = self.proxies[proxy].requests + 1
+
 
 @attr.s
 class ProxyState(object):
@@ -159,3 +189,30 @@ def exp_backoff(attempt, cap=3600, base=300):
 def exp_backoff_full_jitter(*args, **kwargs):
     """ Exponential backoff time with Full Jitter """
     return random.uniform(0, exp_backoff(*args, **kwargs))
+
+
+class ProxyAssesment:
+    ping = 0
+    requests = 0
+    priority = 1
+    failed_attempts = 0
+    next_check = None
+    backoff_time = None
+    url = ''
+
+    @property
+    def mark(self):
+        return self.ping * self.priority + self.requests
+
+    def __init__(self, url):
+        self.url = url
+
+    __dict__ = {
+        'ping' : ping,
+        'requests' : requests,
+        'priority' : priority,
+        'failed_attempts' : failed_attempts,
+        'next_check' : next_check,
+        'backoff_time' : backoff_time
+    }
+

@@ -26,8 +26,8 @@ class RotatingProxyMiddleware(object):
 
         DOWNLOADER_MIDDLEWARES = {
             # ...
-            'rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
-            'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
+            'rentier_rotating_proxies.middlewares.RotatingProxyMiddleware': 610,
+            'rentier_rotating_proxies.middlewares.BanDetectionMiddleware': 620,
             # ...
         }
 
@@ -64,41 +64,46 @@ class RotatingProxyMiddleware(object):
       Default is 3600 (i.e. 60 min).
     """
     def __init__(self, proxy_list, logstats_interval, stop_if_no_proxies,
-                 max_proxies_to_try, backoff_base, backoff_cap, crawler):
+                 max_proxies_to_try, backoff_base, backoff_cap, crawler, reanimate_interval):
 
         backoff = partial(exp_backoff_full_jitter, base=backoff_base, cap=backoff_cap)
         self.proxies = Proxies(self.cleanup_proxy_list(proxy_list),
                                backoff=backoff)
         self.logstats_interval = logstats_interval
-        self.reanimate_interval = 5
+        self.reanimate_interval = reanimate_interval
         self.stop_if_no_proxies = stop_if_no_proxies
         self.max_proxies_to_try = max_proxies_to_try
         self.stats = crawler.stats
 
     @classmethod
     def from_crawler(cls, crawler):
-        s = crawler.settings
-        proxy_path = s.get('ROTATING_PROXY_LIST_PATH', None)
+        settings = crawler.settings
+        proxy_path = settings.get('ROTATING_PROXY_LIST_PATH', None)
         if proxy_path is not None:
             with codecs.open(proxy_path, 'r', encoding='utf8') as f:
                 proxy_list = [line.strip() for line in f if line.strip()]
         else:
-            proxy_list = s.getlist('ROTATING_PROXY_LIST')
+            proxy_list = settings.getlist('ROTATING_PROXY_LIST')
         if not proxy_list:
             raise NotConfigured()
+
         mw = cls(
             proxy_list=proxy_list,
-            logstats_interval=s.getfloat('ROTATING_PROXY_LOGSTATS_INTERVAL', 30),
-            stop_if_no_proxies=s.getbool('ROTATING_PROXY_CLOSE_SPIDER', False),
-            max_proxies_to_try=s.getint('ROTATING_PROXY_PAGE_RETRY_TIMES', 5),
-            backoff_base=s.getfloat('ROTATING_PROXY_BACKOFF_BASE', 300),
-            backoff_cap=s.getfloat('ROTATING_PROXY_BACKOFF_CAP', 3600),
+            logstats_interval=settings.getfloat('ROTATING_PROXY_LOGSTATS_INTERVAL', 30),
+            stop_if_no_proxies=settings.getbool('ROTATING_PROXY_CLOSE_SPIDER', False),
+            max_proxies_to_try=settings.getint('ROTATING_PROXY_PAGE_RETRY_TIMES', 5),
+            backoff_base=settings.getfloat('ROTATING_PROXY_BACKOFF_BASE', 300),
+            backoff_cap=settings.getfloat('ROTATING_PROXY_BACKOFF_CAP', 3600),
+            reanimate_interval=settings.getint('ROTATING_PROXY_REANIMATE_INTERVAL', 30),
             crawler=crawler,
         )
+
         crawler.signals.connect(mw.engine_started,
                                 signal=signals.engine_started)
+
         crawler.signals.connect(mw.engine_stopped,
                                 signal=signals.engine_stopped)
+
         return mw
 
     def engine_started(self):
@@ -122,7 +127,7 @@ class RotatingProxyMiddleware(object):
     def process_request(self, request, spider):
         if 'proxy' in request.meta and not request.meta.get('_rotating_proxy'):
             return
-        proxy = self.proxies.get_random()
+        proxy = self.proxies.get_random()  # type : Optional[str]
         if not proxy:
             if self.stop_if_no_proxies:
                 raise CloseSpider("no_proxies")
@@ -155,6 +160,7 @@ class RotatingProxyMiddleware(object):
         return self._handle_result(request, spider) or response
 
     def _handle_result(self, request, spider):
+
         proxy = self.proxies.get_proxy(request.meta.get('proxy', None))
         if not (proxy and request.meta.get('_rotating_proxy')):
             return
@@ -168,6 +174,7 @@ class RotatingProxyMiddleware(object):
             return self._retry(request, spider)
         elif ban is False:
             self.proxies.mark_good(proxy)
+            self.proxies.grade_proxy(proxy, request.meta.get('download_latency'))
             self.stats.set_value('proxies/good', len(self.proxies.dead))
 
     def _retry(self, request, spider):
@@ -214,7 +221,7 @@ class BanDetectionMiddleware(object):
 
         DOWNLOADER_MIDDLEWARES = {
             # ...
-            'rotating_proxies.middlewares.BanDetectionMiddleware': 620,
+            'rentier_rotating_proxies.middlewares.BanDetectionMiddleware': 620,
             # ...
         }
 
@@ -231,7 +238,7 @@ class BanDetectionMiddleware(object):
     to subclass and modify default BanDetectionPolicy::
         
         # myproject/policy.py
-        from rotating_proxies.policy import BanDetectionPolicy
+        from rentier_rotating_proxies.policy import BanDetectionPolicy
         
         class MyPolicy(BanDetectionPolicy):
             def response_is_ban(self, request, response):
@@ -270,7 +277,7 @@ class BanDetectionMiddleware(object):
     def _load_policy(cls, crawler):
         policy_path = crawler.settings.get(
             'ROTATING_PROXY_BAN_POLICY',
-            'rotating_proxies.policy.BanDetectionPolicy'
+            'rentier_rotating_proxies.policy.BanDetectionPolicy'
         )
         policy_cls = load_object(policy_path)
         if hasattr(policy_cls, 'from_crawler'):
