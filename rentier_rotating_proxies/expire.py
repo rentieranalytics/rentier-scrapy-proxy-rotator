@@ -166,7 +166,6 @@ class Proxies(object):
         :return:
         """
         self.proxies[proxy].ping = ping
-        self.proxies[proxy].requests = self.proxies[proxy].requests + 1
 
 
 @attr.s

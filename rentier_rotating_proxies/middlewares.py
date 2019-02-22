@@ -141,6 +141,7 @@ class RotatingProxyMiddleware(object):
                     raise CloseSpider("no_proxies_after_reset")
 
         request.meta['proxy'] = proxy
+        self.proxies.proxies[proxy].requests = self.proxies.proxies[proxy].requests + 1
         request.meta['download_slot'] = self.get_proxy_slot(proxy)
         request.meta['_rotating_proxy'] = True
 

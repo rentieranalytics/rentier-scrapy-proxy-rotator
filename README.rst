@@ -1,5 +1,5 @@
-scrapy-rotating-proxies
-=======================
+Rentier Analytics Scrapy Proxy Rotator
+======================================
 
 .. image:: https://img.shields.io/pypi/v/rentier-scrapy-proxy-rotator.svg
    :target: https://pypi.python.org/pypi/rentier-scrapy-proxy-rotator
@@ -30,7 +30,8 @@ Add ``ROTATING_PROXY_LIST`` option with a list of proxies to settings.py::
         # ...
     ]
 
-As an alternative, you can specify a ``ROTATING_PROXY_LIST_PATH`` options
+
+As an option, you can specify a ``ROTATING_PROXY_LIST_PATH`` options
 with a path to a file with proxies, one per line::
 
    ROTATING_PROXY_LIST_PATH = '/my/path/proxies.txt'
@@ -46,8 +47,9 @@ Then add rotating_proxies middlewares to your DOWNLOADER_MIDDLEWARES::
         # ...
     }
 
+
 After this all requests will be proxied using one of the proxies from
-the ``ROTATING_PROXY_LIST`` / ``ROTATING_PROXY_LIST_PATH``.
+the ``ROTATING_PROXY_LIST`` and ``ROTATING_PROXY_LIST_PATH``.
 
 Requests with "proxy" set in their meta are not handled by
 scrapy-rotating-proxies. To disable proxying for a request set
@@ -72,7 +74,7 @@ Customization
 and re-checks non-working from time to time.
 
 Detection of a non-working proxy is site-specific.
-By default, ``scrapy-rotating-proxies`` uses a simple heuristic:
+By default, ``rentier-scrapy-proxy-rotator`` uses a simple heuristic:
 if a response status code is not 200, response body is empty or if
 there was an exception then proxy is considered dead.
 
@@ -119,7 +121,7 @@ request and a bad proxy should be different: if it is a proxy to blame
 it makes sense to retry the request with a different proxy.
 
 Non-working proxies could become alive again after some time.
-``scrapy-rotating-proxies`` uses a randomized exponential backoff for these
+``rentier-scrapy-proxy-rotator`` uses a randomized exponential backoff for these
 checks - first check happens soon, if it still fails then next check is
 delayed further, etc. Use ``ROTATING_PROXY_BACKOFF_BASE`` to adjust the
 initial delay (by default it is random, from 0 to 5 minutes). The randomized
@@ -149,7 +151,7 @@ Settings
 * ``ROTATING_PROXY_BACKOFF_CAP`` - backoff time cap, in seconds.
   Default is 3600 (i.e. 60 min).
 * ``ROTATING_PROXY_BAN_POLICY`` - path to a ban detection policy.
-  Default is ``'rotating_proxies.policy.BanDetectionPolicy'``.
+  Default is ``'rentier_rotating_proxies.policy.BanDetectionPolicy'``.
 
 
 FAQ
